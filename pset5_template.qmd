@@ -48,19 +48,38 @@ import time
 import warnings 
 warnings.filterwarnings('ignore')
 alt.renderers.enable("png")
-```
 
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import urllib3
+```
 
 ## Step 1: Develop initial scraper and crawler
 
 ### 1. Scraping (PARTNER 1)
+1. Scraping: Go to the first page of the HHS OIG’s “Enforcement Actions” page and scrape and collect the following into a dataset:
+
+• Title of the enforcement action
+• Date
+• Category (e.g, “Criminal and Civil Actions”)
+• Link associated with the enforcement action
+
+Collect your output into a tidy dataframe and print its head.
 
 ```{python}
-
+url = "https://oig.hhs.gov/fraud/enforcement/"
+http = urllib3.PoolManager()
+response = http.request("GET", url)
+soup = BeautifulSoup(response.data, "html.parser")
+soup
 ```
 
-  
+
 ### 2. Crawling (PARTNER 1)
+2. Crawling: Then for each enforcement action, click the link and collect the name of the agency involved (e.g., for this link, it would be U.S. Attorney’s Oﬀice, Eastern District of Washington). Update your dataframe with the name of the agency and print its head.
+
+Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
 
