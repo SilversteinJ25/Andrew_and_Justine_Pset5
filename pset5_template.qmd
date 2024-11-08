@@ -90,7 +90,14 @@ Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website
 ### 1. Turning the scraper into a function 
 
 * a. Pseudo-Code (PARTNER 2)
-
+#define function
+def year-scraper(data, month, year):
+  for action in data:
+    if year >= 2013:
+    
+      time.sleep(4) #will cause the scraper to delay for 4 seconds
+    else:
+      print("Only search for years in 2013 and later")
 
 * b. Create Dynamic Scraper (PARTNER 2)
 
