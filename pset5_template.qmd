@@ -53,6 +53,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import urllib3
+import time
 ```
 
 ## Step 1: Develop initial scraper and crawler
@@ -69,12 +70,39 @@ Collect your output into a tidy dataframe and print its head.
 
 ```{python}
 url = "https://oig.hhs.gov/fraud/enforcement/"
-http = urllib3.PoolManager()
-response = http.request("GET", url)
-soup = BeautifulSoup(response.data, "html.parser")
-soup
+response = requests.get(url)
+soup = BeautifulSoup(response.content, "html.parser")
 ```
 
+```{python}
+enforcement_data = []
+enforcement_cards = soup.find_all('li', class_='usa-card')
+
+for card in enforcement_cards:
+    title_tag = card.find('h2', class_='usa-card__heading')
+    title = title_tag.find('a').get_text(strip=True) if title_tag else 'N/A'
+
+    date_tag = card.find('span', class_='text-base-dark')
+    date = date_tag.get_text(strip=True) if date_tag else 'N/A'
+
+    category_tag = card.find('li', class_='usa-tag')
+    category = category_tag.get_text(strip=True) if category_tag else 'N/A'
+
+    link_tag = title_tag.find('a') if title_tag else None
+    link = link_tag['href'] if link_tag else 'N/A'
+    full_link = f"https://oig.hhs.gov{link}"
+
+    enforcement_data.append({
+        'Title of Enforcement Action': title,
+        'Date': date,
+        'Category': category,
+        'Associated Link': full_link
+    })
+    time.sleep(0.2)
+
+OIG_df = pd.DataFrame(enforcement_data)
+print(OIG_df.head())
+```
 
 ### 2. Crawling (PARTNER 1)
 2. Crawling: Then for each enforcement action, click the link and collect the name of the agency involved (e.g., for this link, it would be U.S. Attorney’s Oﬀice, Eastern District of Washington). Update your dataframe with the name of the agency and print its head.
@@ -82,6 +110,61 @@ soup
 Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
+import requests
+from bs4 import BeautifulSoup
+import time
+import pandas as pd
+
+# Base URL for the site
+base_url = "https://oig.hhs.gov"
+
+# Main page URL where enforcement actions are listed
+url = "https://oig.hhs.gov/fraud/enforcement/"
+
+# Send request to the main page and parse the HTML content
+response = requests.get(url)
+soup = BeautifulSoup(response.content, "html.parser")
+
+# Step 1: Extract links to individual enforcement action pages
+# We need to find all <a> tags where the 'href' contains 'fraud/enforcement/'
+enforcement_links = []
+
+for link in soup.find_all('a', href=True):
+    href = link['href']
+    # Only include links that contain 'fraud/enforcement/'
+    if 'fraud/enforcement/' in href:
+        full_link = f"{base_url}{href}"
+        enforcement_links.append(full_link)
+
+# Step 2: Follow each link and extract the agency name
+enforcement_data = []
+
+for link in enforcement_links:
+    # Send a GET request to each enforcement page
+    action_response = requests.get(link)
+    action_soup = BeautifulSoup(action_response.content, "html.parser")
+    
+    # Step 3: Extract the agency name from the enforcement action page
+    # Look for the <li> containing the text 'Agency:'
+    agency_tag = action_soup.find('li', string=lambda text: text and 'Agency:' in text)
+    agency = agency_tag.get_text(strip=True).replace('Agency:', '').strip() if agency_tag else 'N/A'
+    
+    # Step 4: Collect the data (Agency name and associated link)
+    enforcement_data.append({
+        'Agency': agency,
+        'Link': link
+    })
+    
+    # To avoid overwhelming the server, add a small delay
+    time.sleep(1)
+
+# Step 5: Create a DataFrame to hold the data
+OIG_df = pd.DataFrame(enforcement_data)
+
+# Step 6: Display the DataFrame
+print(OIG_df.head())  # Print the first few rows
+
+
 
 ```
 
