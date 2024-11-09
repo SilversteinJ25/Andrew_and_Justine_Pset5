@@ -115,6 +115,7 @@ def extract_agency_from_page(url):
         response = requests.get(url)
         if response.status_code != 200:
             return 'Failed to retrieve page'
+        
         tree = html.fromstring(response.content)
         agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
 
@@ -132,17 +133,15 @@ def add_agency_column_to_OIG(OIG_df):
 
     for index, row in OIG_df.iterrows():
         link = row['Associated Link']
-        
         if link:
             print(f"Processing link {index + 1}: {link}")
             agency_name = extract_agency_from_page(link)
         else:
             agency_name = 'No Link Available'
         agency_names.append(agency_name)
-        time.sleep(0.2)
+        time.sleep(1)
     OIG_df['Agency'] = agency_names
     return OIG_df
-
 OIG_df = add_agency_column_to_OIG(OIG_df)
 print(OIG_df.head())
 ```
@@ -153,6 +152,7 @@ print(OIG_df.head())
 
 * a. Pseudo-Code (PARTNER 2)
 
+```{python}
 #datetime will be required for conditioning on year_month
 from datetime import date
 
@@ -177,6 +177,7 @@ def year_scraper(site, year_month):
     else:
       print("Only search for years in 2013 and later!")
   return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
+```
 
 # create each chunk separately, and then put them together
 
