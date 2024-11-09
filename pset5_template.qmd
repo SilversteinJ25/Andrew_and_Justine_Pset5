@@ -202,15 +202,19 @@ print(OIG_df.head())
 #datetime will be required for conditioning on year_month
 from datetime import date
 
+#There will be a while loop that will be conditioned on
+whether or not the webpage has a date earlier than the
+earliest date we want to scrape. This loop will be 
+part of the year_scraper() function.
+
 #receive input of web link and
 #a date object called year_month 
 def year_scraper(site, year_month):
   #receiving object
   enforcement_actions_year_month = []
 
-  #first run a function to read the data in
- 
-  #then run enforced_frame()
+  run function for assembling dataframe containing
+
 
   #then run for loop with condition
 
@@ -418,6 +422,17 @@ site = "https://oig.hhs.gov/fraud/enforcement/"
 base_url = "https://oig.hhs.gov"
 
 the_crawler(site, target_date, base_url)
+
+
+```
+
+Load the dataframe from the csv
+```{python}
+enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+
+#drop the the columns that slipped through the cracks
+enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
+
 
 
 ```
