@@ -173,25 +173,31 @@ print(OIG_df.head())  # Print the first few rows
 ### 1. Turning the scraper into a function 
 
 * a. Pseudo-Code (PARTNER 2)
-#define function
-def year-scraper(data, month, year):
 
-#...code  from Step 1 to access the website,
-select and read in the html code, make it into
-a text object, iterate through 
+#datetime will be required for conditioning on year_month
+from datetime import date
 
+#receive input of web link and
+#a date object called year_month 
+def year_scraper(site, year_month):
+  #receiving object
+  enforcement_actions_year_month = []
 
-enforcement_actions_year_month = [] 
+  #first run a function to read the data in
+ 
+  #then run enforced_frame()
+
+  #then run for loop with condition
+
+  #create date object for January 2nd, 2013
   for action in data:
-    if year >= 2013:
+    if data["Date"] >= year_month:
       
       time.sleep(1) #will cause the scraper to delay for 2 seconds
-      enforcement_actions_year_month.append()
+      yr_month_actions.append(action)
     else:
-      print("Only search for years in 2013 and later")
-  return(df.csv("enforcement_actions_year_month"))
-
-* b. Create Dynamic Scraper (PARTNER 2)
+      print("Only search for years in 2013 and later!")
+  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
 
 # create each chunk separately, and then put them together
 
@@ -203,6 +209,21 @@ def reading_data(url): #url will be the appropriate link
   response = requests.get(url)
   soup = BeautifulSoup(response.content, "html.parser")
   return(soup)
+
+def find_dates(soup):
+  date_list = []
+  enforcement_cards = soup.find_all('li', class_='usa-card')
+  for card in enforcement_cards:
+    date_tag = card.find('span', class_='text-base-dark')
+    date = date_tag.get_text(strip=True) if date_tag else 'N/A'
+    dt_date = pd.to_datetime(date)
+    date_list.append(dt_date)
+  return(date_list)
+
+
+
+#need a loop to select dates and then turn them into datetime
+
 
 ```
 
@@ -245,14 +266,56 @@ def enforce_frame(soup):
   OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
   return(OIG_df)
 
-enforce_frame(soup)
 
 ```
 
 #select the enforcement links and iterate through each
 ```{python}
+# Base URL for the site
+# this will be required for the function
+# define this before running the function
+base_url = "https://oig.hhs.gov"
 
+def get_links(data):
 
+#use soup object made in reading_data() 
+# Step 1: Extract links to individual enforcement action pages
+# We need to find all <a> tags where 
+# the 'href' contains 'fraud/enforcement/'
+  enforcement_links = []
+
+  for link in soup.find_all('a', href=True):
+      href = link['href']
+    # Only include links that contain 'fraud/enforcement/'
+      if 'fraud/enforcement/' in href:
+          full_link = f"{base_url}{href}"
+          enforcement_links.append(full_link)
+
+# Step 2: Follow each link and extract the agency name
+  enforcement_data = []
+
+  for link in enforcement_links:
+    # Send a GET request to each enforcement page
+      action_response = requests.get(link)
+      action_soup = BeautifulSoup(action_response.content, "html.parser")
+    
+    # Step 3: Extract the agency name from the enforcement action page
+    # Look for the <li> containing the text 'Agency:'
+      agency_tag = action_soup.find('li', string=lambda text: text and 'Agency:' in text)
+      agency = agency_tag.get_text(strip=True).replace('Agency:', '').strip() if agency_tag else 'N/A'
+    
+    # Step 4: Collect the data (Agency name and associated link)
+      enforcement_data.append({
+        'Agency': agency,
+        'Link': link
+      })
+    
+    # To avoid overwhelming the server, add a small delay
+      time.sleep(1)
+
+# Step 5: Create a DataFrame to hold the data. 
+  OIG_df = pd.DataFrame(enforcement_data)
+  return(OIG_df)
 
 ```
 
@@ -260,21 +323,30 @@ enforce_frame(soup)
 ```{python}
 from datetime import date
 
-def year_scraper(data, month, year):
+#set year_month as the first month of 2013
+year_month = date(2013, 1, 1)
+
+#site will be the website we've been using
+site = "https://oig.hhs.gov/fraud/enforcement/"
+
+# Base URL for the site 
+# (will be required for get_links() function)
+base_url = "https://oig.hhs.gov"
+
+def year_scraper(site, year_month):
   #receiving object
   enforcement_actions_year_month = []
   #first run reading_data()
- 
-  #then run enforced_frame()
-
+  soup = reading_data(site)
+  #then run enforce_frame()
+  df1 = enforce_frame(soup)
   #then run for loop with condition
+  for action in df1:
+    if df1["Date"] >= year_month:
+      #run get_links()
+      #note get_links already includes time.sleep()
+      get_links()
 
-  #create date object for January 2nd, 2013
-  year_month = date(2013, 1, 1)
-  for action in data:
-    if data["Date"] >= year_month:
-      
-      time.sleep(1) #will cause the scraper to delay for 2 seconds
       yr_month_actions.append(action)
     else:
       print("Only search for years in 2013 and later!")
