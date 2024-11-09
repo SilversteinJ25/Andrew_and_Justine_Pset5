@@ -408,6 +408,7 @@ def the_crawler(site, target_date, base_url):
 
 Run the_crawler
 ```{python}
+#| eval: false
 #set year_month as the first month of 2013
 target_date = date(2023, 1, 1)
 #site will be the website we've been using
