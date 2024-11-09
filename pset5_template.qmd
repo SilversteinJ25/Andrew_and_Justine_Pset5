@@ -182,8 +182,7 @@ def year_scraper(site, year_month):
 
 
 
-Take the data and select Title of enforcement action, date, category,
-and the link to the enforcement action
+Take the data and select Title of enforcement action, date, category, and the link to the enforcement action
 
 ```{python}
 import datetime as datetime
@@ -365,7 +364,36 @@ the_crawler(site, target_date, base_url)
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
+from datetime import date
 
+#set year_month as the first month of 2013
+year_month = date(2021, 1, 1)
+
+#site will be the website we've been using
+site = "https://oig.hhs.gov/fraud/enforcement/"
+
+# Base URL for the site 
+# (will be required for get_links() function)
+base_url = "https://oig.hhs.gov"
+
+def year_scraper(site, year_month):
+  #receiving object
+  enforcement_actions_year_month = []
+  #first run reading_data()
+  soup = reading_data(site)
+  #then run enforce_frame()
+  df1 = enforce_frame(soup)
+  #then run for loop with condition
+  for action in df1:
+    if df1["Date"] >= year_month:
+      #run get_links()
+      #note get_links already includes time.sleep()
+      get_links()
+
+      yr_month_actions.append(action)
+    else:
+      print("Only search for years in 2021 and later!")
+  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -388,6 +416,72 @@ You will need to divide the five topics manually by looking at the title and ass
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
+import pandas as pd
+import altair as alt
+
+# Example: OIG_df contains 'Title', 'Category', 'Date' columns
+# OIG_df = pd.read_csv("your_data.csv")  # Load your data
+
+# Step 1: Classify the enforcement actions into five topics based on Title
+def classify_topic(title):
+    title = title.lower()
+    if 'health care' in title or 'medicare' in title or 'medicaid' in title:
+        return 'Health Care Fraud'
+    elif 'financial' in title or 'bank' in title or 'fraud' in title:
+        return 'Financial Fraud'
+    elif 'drug' in title or 'opioid' in title:
+        return 'Drug Enforcement'
+    elif 'bribery' in title or 'corruption' in title:
+        return 'Bribery/Corruption'
+    else:
+        return 'Other'
+
+# Apply the classification function to the 'Title' column to create a new 'Topic' column
+OIG_df['Topic'] = OIG_df['Title'].apply(classify_topic)
+
+# Step 2: Add a new 'Is Criminal and Civil Actions' column to differentiate categories
+OIG_df['Is Criminal and Civil Actions'] = OIG_df['Category'].apply(
+    lambda x: True if 'Criminal and Civil Actions' in x else False)
+
+# Step 3: Group by date and category/topic
+# First, make sure 'Date' is a datetime object
+OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
+
+# Group by date, category, and topic to count occurrences
+category_counts = OIG_df.groupby([OIG_df['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
+
+# Group by date and topic (for Criminal and Civil Actions)
+topic_counts = OIG_df[OIG_df['Category'] == 'Criminal and Civil Actions'].groupby([OIG_df['Date'].dt.to_period('M'), 'Topic']).size().reset_index(name='Count')
+
+# Step 4: Plotting with Altair
+# Combine both category_counts and topic_counts into one dataframe
+category_counts['Type'] = 'Category'
+topic_counts['Type'] = 'Topic'
+
+# Concatenate the dataframes
+plot_data = pd.concat([category_counts, topic_counts], ignore_index=True)
+
+# Altair Plot
+chart = alt.Chart(plot_data).mark_line().encode(
+    x='Date:T',  # Time on the x-axis
+    y='Count:Q',  # Count of enforcement actions on the y-axis
+    color='Type:N',  # Color by 'Type' (Category or Topic)
+    detail='Type:N',  # Separate lines for each type
+    strokeDash='Type:N',  # Different line styles (solid vs. dashed)
+    tooltip=['Date:T', 'Count:Q', 'Type:N']
+).facet(
+    column='Type:N',  # Facet by 'Type' (Category vs. Topic)
+    header=alt.Header(title='Enforcement Actions by Category and Topic')
+).properties(
+    title='Number of Enforcement Actions Over Time',
+    width=400,
+    height=300
+).configure_axis(
+    labelAngle=-45  # Rotate the x-axis labels for better readability
+)
+
+# Display the chart
+chart.show()
 
 ```
 
