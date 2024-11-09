@@ -110,6 +110,42 @@ print(OIG_df.head())
 Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
+agency_names = [] 
+
+for index, row in OIG_df.iterrows():
+    link = row['Associated Link']
+    
+    if link:
+        print(f"Processing link {index + 1}: {link}")
+        try:
+            response = requests.get(link)
+            
+            if response.status_code == 200:
+                tree = html.fromstring(response.content)
+                agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
+                
+                if agency_text:
+                    agency_name = agency_text[0].strip()
+                else:
+                    agency_name = 'No Agency Info'
+            else:
+                agency_name = 'Failed to Retrieve Page'
+        except Exception as e:
+            print(f"Error processing {link}: {e}")
+            agency_name = 'Error Fetching Agency'
+        
+        agency_names.append(agency_name)
+    
+    else:
+        agency_names.append('No Link Available')
+
+    time.sleep(1)
+
+OIG_df['Agency'] = agency_names
+print(OIG_df.head())
+```
+
+```{python}
 import requests
 from lxml import html
 
@@ -320,7 +356,7 @@ def site_moving(site):
         next_link_tag = soup.find("a", class_="pagination-next")
         if next_link_tag:
             next_link = next_link_tag.get("href")
-            current_url = f"{base_url}{next_link}"
+            current_url = f"{site}{next_link}"
             
         else:
             print("No more pages to navigate.")
@@ -336,7 +372,10 @@ def site_moving(site):
  
 ```
 
-Attribution: Asked ChatGPT how to create datetime object that would capture both year and month at once.  Asked ChatGPT how to convert an object into a datetime object. Also asked ChatGPT how to create a function that would loop in order to move forward through pages. The main change was switching to a while loop
+Attribution: Asked ChatGPT how to create datetime object that would 
+capture both year and month at once.  Asked ChatGPT how to convert an object into a datetime object. Also asked ChatGPT how to create a function 
+that would loop in order to move forward through pages. The main change
+was switching to a while loop.
 
 #Put everything together
 ```{python}
@@ -362,9 +401,24 @@ def the_crawler(site, target_date, base_url):
   else:
     #insert the function for scraping
     all_the_data = site_moving(site)
-  return pd.to_csv(all_the_data, "enforcement_actions_year_month.csv")
+  return all_the_data.to_csv("enforcement_actions_year_month.csv", index = False)
+
+
+```
+
+Run the_crawler
+```{python}
+#set year_month as the first month of 2013
+target_date = date(2023, 1, 1)
+#site will be the website we've been using
+site = "https://oig.hhs.gov/fraud/enforcement/"
+# Base URL for the site 
+# (will be required for get_links() function)
+base_url = "https://oig.hhs.gov"
 
 the_crawler(site, target_date, base_url)
+
+
 ```
 
 * c. Test Partner's Code (PARTNER 1)
@@ -407,7 +461,26 @@ def year_scraper(site, year_month):
 ### 1. Plot the number of enforcement actions over time (PARTNER 2)
 
 ```{python}
+#make a column returning 1 for each observation
+def  one_dummy(C):
+  observation = []
+  i = 0
+  #produces a 1 for every entry
+  while 1 > 0 and i < C:
+    observation.append(1)
+    i += 1
+  return(observation)
 
+#add observation column to df
+df["Observation"] = one_dummy(len(df))
+
+#make a line chart that is 
+#"Observation" by yearmonth("Date")
+#Observation represents 1 enforcement
+alt.Chart().mark_line().encode(
+  alt.X("yearmonth(Date)"),
+  alt.Y("Observations")
+)
 ```
 
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
@@ -422,30 +495,72 @@ You will need to divide the five topics manually by looking at the title and ass
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
+import pandas as pd
 import altair as alt
 
-OIG_df['Date'] = pd.to_datetime(OIG_df['Date'], errors='coerce')
+# Example: OIG_df contains 'Title', 'Category', 'Date' columns
+# OIG_df = pd.read_csv("your_data.csv")  # Load your data
 
-category_filter = OIG_df[OIG_df['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
-category_counts = category_filter.groupby([category_filter['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
-category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
+# Step 1: Classify the enforcement actions into five topics based on Title
+def classify_topic(title):
+    title = title.lower()
+    if 'health care' in title or 'medicare' in title or 'medicaid' in title:
+        return 'Health Care Fraud'
+    elif 'financial' in title or 'bank' in title or 'fraud' in title:
+        return 'Financial Fraud'
+    elif 'drug' in title or 'opioid' in title:
+        return 'Drug Enforcement'
+    elif 'bribery' in title or 'corruption' in title:
+        return 'Bribery/Corruption'
+    else:
+        return 'Other'
 
-import altair as alt
+# Apply the classification function to the 'Title' column to create a new 'Topic' column
+OIG_df['Topic'] = OIG_df['Title'].apply(classify_topic)
 
-# Assuming category_counts is already prepared as shown in previous steps
+# Step 2: Add a new 'Is Criminal and Civil Actions' column to differentiate categories
+OIG_df['Is Criminal and Civil Actions'] = OIG_df['Category'].apply(
+    lambda x: True if 'Criminal and Civil Actions' in x else False)
 
-# Create the line chart with Altair
-line_chart = alt.Chart(category_counts).mark_line().encode(
-    x='Date:T',  # X-axis: Date (Temporal)
-    y='Count:Q',  # Y-axis: Count of actions (Quantitative)
-    color='Category:N',  # Color split by Category (Nominal)
-    tooltip=['Date:T', 'Category:N', 'Count:Q']  # Show Date, Category, and Count in tooltip
+# Step 3: Group by date and category/topic
+# First, make sure 'Date' is a datetime object
+OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
+
+# Group by date, category, and topic to count occurrences
+category_counts = OIG_df.groupby([OIG_df['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
+
+# Group by date and topic (for Criminal and Civil Actions)
+topic_counts = OIG_df[OIG_df['Category'] == 'Criminal and Civil Actions'].groupby([OIG_df['Date'].dt.to_period('M'), 'Topic']).size().reset_index(name='Count')
+
+# Step 4: Plotting with Altair
+# Combine both category_counts and topic_counts into one dataframe
+category_counts['Type'] = 'Category'
+topic_counts['Type'] = 'Topic'
+
+# Concatenate the dataframes
+plot_data = pd.concat([category_counts, topic_counts], ignore_index=True)
+
+# Altair Plot
+chart = alt.Chart(plot_data).mark_line().encode(
+    x='Date:T',  # Time on the x-axis
+    y='Count:Q',  # Count of enforcement actions on the y-axis
+    color='Type:N',  # Color by 'Type' (Category or Topic)
+    detail='Type:N',  # Separate lines for each type
+    strokeDash='Type:N',  # Different line styles (solid vs. dashed)
+    tooltip=['Date:T', 'Count:Q', 'Type:N']
+).facet(
+    column='Type:N',  # Facet by 'Type' (Category vs. Topic)
+    header=alt.Header(title='Enforcement Actions by Category and Topic')
 ).properties(
-    title="Enforcement Actions by Category Over Time"
+    title='Number of Enforcement Actions Over Time',
+    width=400,
+    height=300
+).configure_axis(
+    labelAngle=-45  # Rotate the x-axis labels for better readability
 )
 
-# Show the chart
-line_chart.show()
+# Display the chart
+chart.show()
 
 ```
 
