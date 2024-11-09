@@ -193,10 +193,9 @@ enforcement_actions_year_month = []
 
 * b. Create Dynamic Scraper (PARTNER 2)
 
-#create each chunk separately, and then put them together
+# create each chunk separately, and then put them together
 
 #reading in the data, as in Step 1
-
 ```{python}
 #adding code from Step 1
 #make it a function for easier manipulation
@@ -204,8 +203,6 @@ def reading_data(url): #url will be the appropriate link
   response = requests.get(url)
   soup = BeautifulSoup(response.content, "html.parser")
   return(soup)
-
-
 
 ```
 
@@ -252,27 +249,40 @@ enforce_frame(soup)
 
 ```
 
-
-
+#select the enforcement links and iterate through each
 ```{python}
 
 
 
+```
+
+#create a loop to loop through the "Date" category
+```{python}
+from datetime import date
+
 def year_scraper(data, month, year):
   #receiving object
   enforcement_actions_year_month = []
-  
+  #first run reading_data()
+ 
+  #then run enforced_frame()
 
+  #then run for loop with condition
+
+  #create date object for January 2nd, 2013
+  year_month = date(2013, 1, 1)
   for action in data:
-    #parse year objects as datetime objects
-    if year >= 2013:
+    if data["Date"] >= year_month:
       
       time.sleep(1) #will cause the scraper to delay for 2 seconds
-      enforcement_actions_year_month.append(action)
+      yr_month_actions.append(action)
     else:
       print("Only search for years in 2013 and later!")
-  return(enforcement_actions_year_month.csv("enforcement_actions_year_month"))
+  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
 ```
+
+Attribution: Asked ChatGPT how to create datetime object that would 
+capture both year and month at once. 
 
 * c. Test Partner's Code (PARTNER 1)
 
