@@ -264,8 +264,6 @@ def enforce_frame(soup):
       time.sleep(0.2)
 
   OIG_df = pd.DataFrame(enforcement_data)
-  #an addition to make datetime object
-  OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
   return(OIG_df)
 
 
