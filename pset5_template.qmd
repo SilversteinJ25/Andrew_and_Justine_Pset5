@@ -110,6 +110,45 @@ print(OIG_df.head())
 Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
+agency_names = [] 
+
+for index, row in OIG_df.iterrows():
+    link = row['Associated Link']
+    
+    if link:
+        print(f"Processing link {index + 1}: {link}")
+        try:
+            response = requests.get(link)
+            
+            if response.status_code == 200:
+                tree = html.fromstring(response.content)
+                agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
+                
+                if agency_text:
+                    agency_name = agency_text[0].strip()
+                else:
+                    agency_name = 'No Agency Info'
+            else:
+                agency_name = 'Failed to Retrieve Page'
+        except Exception as e:
+            print(f"Error processing {link}: {e}")
+            agency_name = 'Error Fetching Agency'
+        
+        agency_names.append(agency_name)
+    
+    else:
+        agency_names.append('No Link Available')
+
+    time.sleep(1)
+
+OIG_df['Agency'] = agency_names
+print(OIG_df.head())
+```
+
+```{python}
+import requests
+from lxml import html
+
 def extract_agency_from_page(url):
     try:
         response = requests.get(url)
@@ -117,6 +156,7 @@ def extract_agency_from_page(url):
             return 'Failed to retrieve page'
         
         tree = html.fromstring(response.content)
+
         agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
 
         if agency_text:
@@ -127,6 +167,10 @@ def extract_agency_from_page(url):
     except Exception as e:
         print(f"Error processing {url}: {e}")
         return 'Error Fetching Agency'
+```
+
+```{python}
+import time
 
 def add_agency_column_to_OIG(OIG_df):
     agency_names = []
@@ -140,8 +184,10 @@ def add_agency_column_to_OIG(OIG_df):
             agency_name = 'No Link Available'
         agency_names.append(agency_name)
         time.sleep(1)
+
     OIG_df['Agency'] = agency_names
     return OIG_df
+
 OIG_df = add_agency_column_to_OIG(OIG_df)
 print(OIG_df.head())
 ```
