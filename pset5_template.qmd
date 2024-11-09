@@ -320,7 +320,7 @@ def site_moving(site):
         next_link_tag = soup.find("a", class_="pagination-next")
         if next_link_tag:
             next_link = next_link_tag.get("href")
-            current_url = f"{base_url}{next_link}"
+            current_url = f"{site}{next_link}"
             
         else:
             print("No more pages to navigate.")
@@ -362,7 +362,7 @@ def the_crawler(site, target_date, base_url):
   else:
     #insert the function for scraping
     all_the_data = site_moving(site)
-  return pd.to_csv(all_the_data, "enforcement_actions_year_month.csv")
+  return all_the_data.to_csv("enforcement_actions_year_month.csv", index = False)
 
 the_crawler(site, target_date, base_url)
 ```
@@ -370,36 +370,35 @@ the_crawler(site, target_date, base_url)
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
+import datetime as datetime
+from datetime import datetime
 from datetime import date
 
 #set year_month as the first month of 2013
-year_month = date(2021, 1, 1)
-
+target_date = date(2021, 1, 1)
 #site will be the website we've been using
 site = "https://oig.hhs.gov/fraud/enforcement/"
-
 # Base URL for the site 
 # (will be required for get_links() function)
 base_url = "https://oig.hhs.gov"
 
-def year_scraper(site, year_month):
-  #receiving object
-  enforcement_actions_year_month = []
-  #first run reading_data()
+def the_crawler(site, target_date, base_url):
+  #read in the data
   soup = reading_data(site)
-  #then run enforce_frame()
-  df1 = enforce_frame(soup)
-  #then run for loop with condition
-  for action in df1:
-    if df1["Date"] >= year_month:
-      #run get_links()
-      #note get_links already includes time.sleep()
-      get_links()
+  #check whether your year is greater than 
+  #or equal to 2013
+  if target_date <= date(2013, 1, 1):
+    print("Turn back! Subset for 2013 and later")
+  else:
+    #insert the function for scraping
+    all_the_data = site_moving(site)
+  return all_the_data.to_csv("enforcement_actions_year_month.csv", index = False)
 
-      yr_month_actions.append(action)
-    else:
-      print("Only search for years in 2021 and later!")
-  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
+the_crawler(site, target_date, base_url)
+```
+
+```{python}
+enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_year_month.csv")
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -413,43 +412,32 @@ def year_scraper(site, year_month):
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
 
 Plot a line chart that shows: the number of enforcement actions split out by:
-• “Criminal and Civil Actions” vs. “State Enforcement Agencies”
-• Five topics in the “Criminal and Civil Actions” category: “Health Care Fraud”, “Financial Fraud”, “Drug Enforcement”, “Bribery/Corruption”, and “Other”. 
-
-Hint:
-You will need to divide the five topics manually by looking at the title and assigning the relevant topic. For example, if you find the word “bank” or “financial” in the title of an action, then that action should probably belong to “Financial Fraud” topic.
 
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
-import altair as alt
+enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date'], errors='coerce')
 
-OIG_df['Date'] = pd.to_datetime(OIG_df['Date'], errors='coerce')
-
-category_filter = OIG_df[OIG_df['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
+category_filter = enforcement_actions_2021[enforcement_actions_2021['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
 category_counts = category_filter.groupby([category_filter['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
 category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
 
-import altair as alt
-
-# Assuming category_counts is already prepared as shown in previous steps
-
-# Create the line chart with Altair
 line_chart = alt.Chart(category_counts).mark_line().encode(
-    x='Date:T',  # X-axis: Date (Temporal)
-    y='Count:Q',  # Y-axis: Count of actions (Quantitative)
-    color='Category:N',  # Color split by Category (Nominal)
-    tooltip=['Date:T', 'Category:N', 'Count:Q']  # Show Date, Category, and Count in tooltip
+    x='Date:T',  
+    y='Count:Q',  
+    color='Category:N',  
+    tooltip=['Date:T', 'Category:N', 'Count:Q']  
 ).properties(
     title="Enforcement Actions by Category Over Time"
 )
 
-# Show the chart
 line_chart.show()
-
 ```
 
 * based on five topics
+
+Hint:
+You will need to divide the five topics manually by looking at the title and assigning the relevant topic. For example, if you find the word “bank” or “financial” in the title of an action, then that action should probably belong to “Financial Fraud” topic.
 
 ```{python}
 
