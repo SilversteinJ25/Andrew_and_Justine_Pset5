@@ -190,8 +190,6 @@ def year_scraper(site, year_month):
 
 # create each chunk separately, and then put them together
 
-
-
 Take the data and select Title of enforcement action, date, category, and the link to the enforcement action
 
 ```{python}
@@ -336,7 +334,8 @@ def site_moving(site):
  
 ```
 
-Attribution: Asked ChatGPT how to create datetime object that would capture both year and month at once.  Asked ChatGPT how to convert an object into a datetime object. Also asked ChatGPT how to create a function that would loop in order to move forward through pages. The main change was switching to a while loop
+Attribution: Asked ChatGPT how to create datetime object that would 
+capture both year and month at once.  Asked ChatGPT how to convert an object into a datetime object. Also asked ChatGPT how to create a function that would loop in order to move forward through pages. The main change was switching to a while loop.
 
 #Put everything together
 ```{python}
@@ -364,6 +363,19 @@ def the_crawler(site, target_date, base_url):
     all_the_data = site_moving(site)
   return all_the_data.to_csv("enforcement_actions_year_month.csv", index = False)
 
+```
+
+Run the_crawler
+```{python}
+#| eval: false
+#set year_month as the first month of 2013
+target_date = date(2023, 1, 1)
+#site will be the website we've been using
+site = "https://oig.hhs.gov/fraud/enforcement/"
+# Base URL for the site 
+# (will be required for get_links() function)
+base_url = "https://oig.hhs.gov"
+
 the_crawler(site, target_date, base_url)
 ```
 
@@ -374,23 +386,15 @@ import datetime as datetime
 from datetime import datetime
 from datetime import date
 
-#set year_month as the first month of 2013
 target_date = date(2021, 1, 1)
-#site will be the website we've been using
 site = "https://oig.hhs.gov/fraud/enforcement/"
-# Base URL for the site 
-# (will be required for get_links() function)
 base_url = "https://oig.hhs.gov"
 
 def the_crawler(site, target_date, base_url):
-  #read in the data
   soup = reading_data(site)
-  #check whether your year is greater than 
-  #or equal to 2013
   if target_date <= date(2013, 1, 1):
     print("Turn back! Subset for 2013 and later")
   else:
-    #insert the function for scraping
     all_the_data = site_moving(site)
   return all_the_data.to_csv("enforcement_actions_year_month.csv", index = False)
 
@@ -398,7 +402,8 @@ the_crawler(site, target_date, base_url)
 ```
 
 ```{python}
-enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_year_month.csv")
+enforcement_actions_2021 = pd.read_csv('/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv')
+
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -406,7 +411,26 @@ enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew
 ### 1. Plot the number of enforcement actions over time (PARTNER 2)
 
 ```{python}
+#make a column returning 1 for each observation
+def  one_dummy(C):
+  observation = []
+  i = 0
+  #produces a 1 for every entry
+  while 1 > 0 and i < C:
+    observation.append(1)
+    i += 1
+  return(observation)
 
+#add observation column to df
+enforcement_actions_2023["Observation"] = one_dummy(len(enforcement_actions_2023))
+
+#make a line chart that is 
+#"Observation" by yearmonth("Date")
+#Observation represents 1 enforcement
+alt.Chart().mark_line().encode(
+  alt.X("yearmonth(Date)"),
+  alt.Y("Observations")
+)
 ```
 
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
@@ -419,8 +443,11 @@ Plot a line chart that shows: the number of enforcement actions split out by:
 enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date'], errors='coerce')
 
 category_filter = enforcement_actions_2021[enforcement_actions_2021['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
+
 category_counts = category_filter.groupby([category_filter['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
+
 category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
+category_counts = category_counts.dropna(subset=['Date'])
 
 line_chart = alt.Chart(category_counts).mark_line().encode(
     x='Date:T',  
@@ -428,7 +455,11 @@ line_chart = alt.Chart(category_counts).mark_line().encode(
     color='Category:N',  
     tooltip=['Date:T', 'Category:N', 'Count:Q']  
 ).properties(
-    title="Enforcement Actions by Category Over Time"
+    title='Number of Enforcement Actions Over Time vs Number of State Agencies',
+    width=400,
+    height=300
+).configure_axis(
+    labelAngle=-45  
 )
 
 line_chart.show()
@@ -440,7 +471,49 @@ Hint:
 You will need to divide the five topics manually by looking at the title and assigning the relevant topic. For example, if you find the word “bank” or “financial” in the title of an action, then that action should probably belong to “Financial Fraud” topic.
 
 ```{python}
+enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date'])
 
+topics_keywords = {
+    'Health Care Fraud': ['health', 'doctor', 'medicare'],
+    'Financial Fraud': ['bank', 'financial', 'money laundering', 'investment', 'tax evasion'],
+    'Drug Enforcement': ['drug', 'trafficking', 'narcotics', 'opioid'],
+    'Bribery/Corruption': ['bribery', 'corruption', 'kickback'],
+    'Other': []  
+}
+
+def categorize_action(title):
+    title = title.lower() 
+    for topic, keywords in topics_keywords.items():
+        if any(keyword in title for keyword in keywords):
+            return topic
+    return 'Other'
+
+enforcement_actions_2021['Topic'] = enforcement_actions_2021['Title of Enforcement Action'].apply(categorize_action)
+
+enforcement_actions_2021_filtered = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'Criminal and Civil Actions']
+
+enforcement_actions_2021_grouped = enforcement_actions_2021_filtered.groupby([enforcement_actions_2021_filtered['Date'], 'Topic']).size().reset_index(name='Count')
+
+print(enforcement_actions_2021_grouped)
+```
+
+```{python}
+enforcement_actions_2021_filtered['Year-Month'] = enforcement_actions_2021_filtered['Date'].dt.to_period('M').astype(str)
+
+enforcement_actions_2021_grouped = enforcement_actions_2021_filtered.groupby(['Year-Month', 'Topic']).size().reset_index(name='Count')
+
+print(enforcement_actions_2021_grouped)
+
+line_chart = alt.Chart(enforcement_actions_2021_grouped).mark_line().encode(
+    x='Year-Month:T', 
+    y='Count:Q',  
+    color='Topic:N', 
+    tooltip=['Year-Month:T', 'Topic:N', 'Count:Q']
+).properties(
+    title="Enforcement Actions by Topic Over Time"
+)
+
+line_chart.show()
 ```
 
 ## Step 4: Create maps of enforcement activity
