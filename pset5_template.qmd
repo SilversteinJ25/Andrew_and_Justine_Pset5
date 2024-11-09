@@ -152,7 +152,7 @@ print(OIG_df.head())
 
 * a. Pseudo-Code (PARTNER 2)
 
-```{python}
+
 #datetime will be required for conditioning on year_month
 from datetime import date
 
@@ -177,15 +177,10 @@ def year_scraper(site, year_month):
     else:
       print("Only search for years in 2013 and later!")
   return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
-```
 
 # create each chunk separately, and then put them together
 
 
-Attribution: Asked ChatGPT how to convert an object into a 
-datetime object. Also asked ChatGPT to trouble shoot 
-my code, and received the suggestion to select href 
-directly in site_moving()
 
 Take the data and select Title of enforcement action, date, category,
 and the link to the enforcement action
@@ -238,46 +233,22 @@ def enforce_frame(soup):
 # define this before running the function
 base_url = "https://oig.hhs.gov"
 
-def get_links(data):
+def add_agency_column_to_OIG(OIG_df):
+    agency_names = []
 
-#use soup object made in reading_data() 
-# Step 1: Extract links to individual enforcement action pages
-# We need to find all <a> tags where 
-# the 'href' contains 'fraud/enforcement/'
-  enforcement_links = []
-
-  for link in soup.find_all('a', href=True):
-      href = link['href']
-    # Only include links that contain 'fraud/enforcement/'
-      if 'fraud/enforcement/' in href:
-          full_link = f"{base_url}{href}"
-          enforcement_links.append(full_link)
-
-# Step 2: Follow each link and extract the agency name
-  enforcement_data = []
-
-  for link in enforcement_links:
-    # Send a GET request to each enforcement page
-      action_response = requests.get(link)
-      action_soup = BeautifulSoup(action_response.content, "html.parser")
-    
-    # Step 3: Extract the agency name from the enforcement action page
-    # Look for the <li> containing the text 'Agency:'
-      agency_tag = action_soup.find('li', string=lambda text: text and 'Agency:' in text)
-      agency = agency_tag.get_text(strip=True).replace('Agency:', '').strip() if agency_tag else 'N/A'
-    
-    # Step 4: Collect the data (Agency name and associated link)
-      enforcement_data.append({
-        'Agency': agency,
-        'Link': link
-      })
-    
-    # To avoid overwhelming the server, add a small delay
-      time.sleep(1)
-
-# Step 5: Create a DataFrame to hold the data. 
-  OIG_df = pd.DataFrame(enforcement_data)
-  return(OIG_df)
+    for index, row in OIG_df.iterrows():
+        link = row['Associated Link']
+        if link:
+            print(f"Processing link {index + 1}: {link}")
+            agency_name = extract_agency_from_page(link)
+        else:
+            agency_name = 'No Link Available'
+        agency_names.append(agency_name)
+        time.sleep(1)
+    OIG_df['Agency'] = agency_names
+    return OIG_df
+OIG_df = add_agency_column_to_OIG(OIG_df)
+print(OIG_df.head())
 
 ```
 
@@ -288,7 +259,7 @@ from datetime import datetime
 from datetime import date
 
 #set year_month as the first month of 2013
-year_month = date(2013, 1, 1)
+target_date = date(2013, 1, 1)
 
 #site will be the website we've been using
 site = "https://oig.hhs.gov/fraud/enforcement/"
@@ -296,7 +267,6 @@ site = "https://oig.hhs.gov/fraud/enforcement/"
 # Base URL for the site 
 # (will be required for get_links() function)
 base_url = "https://oig.hhs.gov"
-
 
 #adding code from Step 1
 #make it a function for easier manipulation
@@ -316,16 +286,24 @@ def find_dates(soup):
     date_list.append(my_date)
   return(date_list)
 
-base_url = "https://oig.hhs.gov"
-year_month = date(2013, 1, 1)
-
 #code for moving between pages based on date tags
-def site_moving(start_url):
-    current_url = start_url
+def site_moving(site):
+    #define the dataframe that will receive
+    #all info
+    full_data = pd.DataFrame(columns = ['Title of Enforcement Action', 'Date', 'Category', 'Associated Link', 'Agency'])
+    current_url = site
     while current_url:
+        #read in data
         soup = reading_data(current_url)
+        #create list of dates
         date_list = find_dates(soup)
-        OIG_df = get_links(soup)
+        #fill dataframe 
+        df = enforce_frame(soup)
+        #add "Agents" to dataframe
+        OIG_df = add_agency_column_to_OIG(df)
+        #concat data
+        full_data = pd.concat([full_data, OIG_df], ignore_index=True)
+
         # Check if any date on this page is before the target date
         if any(d.date() < target_date for d in date_list):
             print("Stopping, found a date before target:", target_date)
@@ -340,6 +318,7 @@ def site_moving(start_url):
         else:
             print("No more pages to navigate.")
             break
+    return full_data
 
 #each time you move to a new page, make a date_list
 #if no object in that date list is less than 2023-1
@@ -351,7 +330,37 @@ def site_moving(start_url):
 ```
 
 Attribution: Asked ChatGPT how to create datetime object that would 
-capture both year and month at once. 
+capture both year and month at once.  Asked ChatGPT how to convert an object into a datetime object. Also asked ChatGPT how to create a function 
+that would loop in order to move forward through pages. The main change
+was switching to a while loop
+
+#Put everything together
+```{python}
+import datetime as datetime
+from datetime import datetime
+from datetime import date
+
+#set year_month as the first month of 2013
+target_date = date(2023, 1, 1)
+#site will be the website we've been using
+site = "https://oig.hhs.gov/fraud/enforcement/"
+# Base URL for the site 
+# (will be required for get_links() function)
+base_url = "https://oig.hhs.gov"
+
+def the_crawler(site, target_date, base_url):
+  #read in the data
+  soup = reading_data(site)
+  #check whether your year is greater than 
+  #or equal to 2013
+  if target_date <= date(2013, 1, 1):
+    print("Turn back! Subset for 2013 and later")
+  else:
+    #insert the function for scraping
+    site_moving(site)
+
+the_crawler(site, target_date, base_url)
+```
 
 * c. Test Partner's Code (PARTNER 1)
 
