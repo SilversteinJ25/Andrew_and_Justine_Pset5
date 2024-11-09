@@ -462,72 +462,30 @@ You will need to divide the five topics manually by looking at the title and ass
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
-import pandas as pd
 import altair as alt
 
-# Example: OIG_df contains 'Title', 'Category', 'Date' columns
-# OIG_df = pd.read_csv("your_data.csv")  # Load your data
+OIG_df['Date'] = pd.to_datetime(OIG_df['Date'], errors='coerce')
 
-# Step 1: Classify the enforcement actions into five topics based on Title
-def classify_topic(title):
-    title = title.lower()
-    if 'health care' in title or 'medicare' in title or 'medicaid' in title:
-        return 'Health Care Fraud'
-    elif 'financial' in title or 'bank' in title or 'fraud' in title:
-        return 'Financial Fraud'
-    elif 'drug' in title or 'opioid' in title:
-        return 'Drug Enforcement'
-    elif 'bribery' in title or 'corruption' in title:
-        return 'Bribery/Corruption'
-    else:
-        return 'Other'
+category_filter = OIG_df[OIG_df['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
+category_counts = category_filter.groupby([category_filter['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
+category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
 
-# Apply the classification function to the 'Title' column to create a new 'Topic' column
-OIG_df['Topic'] = OIG_df['Title'].apply(classify_topic)
+import altair as alt
 
-# Step 2: Add a new 'Is Criminal and Civil Actions' column to differentiate categories
-OIG_df['Is Criminal and Civil Actions'] = OIG_df['Category'].apply(
-    lambda x: True if 'Criminal and Civil Actions' in x else False)
+# Assuming category_counts is already prepared as shown in previous steps
 
-# Step 3: Group by date and category/topic
-# First, make sure 'Date' is a datetime object
-OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
-
-# Group by date, category, and topic to count occurrences
-category_counts = OIG_df.groupby([OIG_df['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
-
-# Group by date and topic (for Criminal and Civil Actions)
-topic_counts = OIG_df[OIG_df['Category'] == 'Criminal and Civil Actions'].groupby([OIG_df['Date'].dt.to_period('M'), 'Topic']).size().reset_index(name='Count')
-
-# Step 4: Plotting with Altair
-# Combine both category_counts and topic_counts into one dataframe
-category_counts['Type'] = 'Category'
-topic_counts['Type'] = 'Topic'
-
-# Concatenate the dataframes
-plot_data = pd.concat([category_counts, topic_counts], ignore_index=True)
-
-# Altair Plot
-chart = alt.Chart(plot_data).mark_line().encode(
-    x='Date:T',  # Time on the x-axis
-    y='Count:Q',  # Count of enforcement actions on the y-axis
-    color='Type:N',  # Color by 'Type' (Category or Topic)
-    detail='Type:N',  # Separate lines for each type
-    strokeDash='Type:N',  # Different line styles (solid vs. dashed)
-    tooltip=['Date:T', 'Count:Q', 'Type:N']
-).facet(
-    column='Type:N',  # Facet by 'Type' (Category vs. Topic)
-    header=alt.Header(title='Enforcement Actions by Category and Topic')
+# Create the line chart with Altair
+line_chart = alt.Chart(category_counts).mark_line().encode(
+    x='Date:T',  # X-axis: Date (Temporal)
+    y='Count:Q',  # Y-axis: Count of actions (Quantitative)
+    color='Category:N',  # Color split by Category (Nominal)
+    tooltip=['Date:T', 'Category:N', 'Count:Q']  # Show Date, Category, and Count in tooltip
 ).properties(
-    title='Number of Enforcement Actions Over Time',
-    width=400,
-    height=300
-).configure_axis(
-    labelAngle=-45  # Rotate the x-axis labels for better readability
+    title="Enforcement Actions by Category Over Time"
 )
 
-# Display the chart
-chart.show()
+# Show the chart
+line_chart.show()
 
 ```
 
