@@ -201,37 +201,19 @@ def year_scraper(site, year_month):
 
 # create each chunk separately, and then put them together
 
-#reading in the data, as in Step 1
-```{python}
-#adding code from Step 1
-#make it a function for easier manipulation
-def reading_data(url): #url will be the appropriate link
-  response = requests.get(url)
-  soup = BeautifulSoup(response.content, "html.parser")
-  return(soup)
 
-def find_dates(soup):
-  date_list = []
-  enforcement_cards = soup.find_all('li', class_='usa-card')
-  for card in enforcement_cards:
-    date_tag = card.find('span', class_='text-base-dark')
-    date = date_tag.get_text(strip=True) if date_tag else 'N/A'
-    dt_date = pd.to_datetime(date)
-    date_list.append(dt_date)
-  return(date_list)
-
-
-
-#need a loop to select dates and then turn them into datetime
-
-
-```
+Attribution: Asked ChatGPT how to convert an object into a 
+datetime object. Also asked ChatGPT to trouble shoot 
+my code, and received the suggestion to select href 
+directly in site_moving()
 
 Take the data and select Title of enforcement action, date, category,
 and the link to the enforcement action
 
 ```{python}
-import datetime as dt
+import datetime as datetime
+from datetime import datetime
+from datetime import date
 
 def enforce_frame(soup):
   #container to be turned into df
@@ -321,6 +303,8 @@ def get_links(data):
 
 #create a loop to loop through the "Date" category
 ```{python}
+import datetime as datetime
+from datetime import datetime
 from datetime import date
 
 #set year_month as the first month of 2013
@@ -333,24 +317,57 @@ site = "https://oig.hhs.gov/fraud/enforcement/"
 # (will be required for get_links() function)
 base_url = "https://oig.hhs.gov"
 
-def year_scraper(site, year_month):
-  #receiving object
-  enforcement_actions_year_month = []
-  #first run reading_data()
-  soup = reading_data(site)
-  #then run enforce_frame()
-  df1 = enforce_frame(soup)
-  #then run for loop with condition
-  for action in df1:
-    if df1["Date"] >= year_month:
-      #run get_links()
-      #note get_links already includes time.sleep()
-      get_links()
 
-      yr_month_actions.append(action)
-    else:
-      print("Only search for years in 2013 and later!")
-  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
+#adding code from Step 1
+#make it a function for easier manipulation
+def reading_data(url): #url will be the appropriate link
+  response = requests.get(url)
+  soup = BeautifulSoup(response.content, "html.parser")
+  return(soup)
+
+#code for selecting specifically date tags and saving them
+def find_dates(soup):
+  date_list = []
+  enforcement_cards = soup.find_all('li', class_='usa-card')
+  for card in enforcement_cards:
+    date_tag = card.find('span', class_='text-base-dark')
+    the_date = date_tag.get_text(strip=True) if date_tag else 'N/A'
+    my_date = datetime.strptime(the_date, "%B %d, %Y")
+    date_list.append(my_date)
+  return(date_list)
+
+base_url = "https://oig.hhs.gov"
+year_month = date(2013, 1, 1)
+
+#code for moving between pages based on date tags
+def site_moving(start_url):
+    current_url = start_url
+    while current_url:
+        soup = reading_data(current_url)
+        date_list = find_dates(soup)
+        OIG_df = get_links(soup)
+        # Check if any date on this page is before the target date
+        if any(d.date() < target_date for d in date_list):
+            print("Stopping, found a date before target:", target_date)
+            break
+        
+        # Find next page link
+        next_link_tag = soup.find("a", class_="pagination-next")
+        if next_link_tag:
+            next_link = next_link_tag.get("href")
+            current_url = f"{base_url}{next_link}"
+            
+        else:
+            print("No more pages to navigate.")
+            break
+
+#each time you move to a new page, make a date_list
+#if no object in that date list is less than 2023-1
+#find the next page tab and request that link,
+#put that link in reading_data()
+
+
+ 
 ```
 
 Attribution: Asked ChatGPT how to create datetime object that would 
