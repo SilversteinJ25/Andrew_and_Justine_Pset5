@@ -110,62 +110,40 @@ print(OIG_df.head())
 Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
-import requests
-from bs4 import BeautifulSoup
-import time
-import pandas as pd
+def extract_agency_from_page(url):
+    try:
+        response = requests.get(url)
+        if response.status_code != 200:
+            return 'Failed to retrieve page'
+        
+        tree = html.fromstring(response.content)
+        agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
 
-# Base URL for the site
-base_url = "https://oig.hhs.gov"
-
-# Main page URL where enforcement actions are listed
-url = "https://oig.hhs.gov/fraud/enforcement/"
-
-# Send request to the main page and parse the HTML content
-response = requests.get(url)
-soup = BeautifulSoup(response.content, "html.parser")
-
-# Step 1: Extract links to individual enforcement action pages
-# We need to find all <a> tags where the 'href' contains 'fraud/enforcement/'
-enforcement_links = []
-
-for link in soup.find_all('a', href=True):
-    href = link['href']
-    # Only include links that contain 'fraud/enforcement/'
-    if 'fraud/enforcement/' in href:
-        full_link = f"{base_url}{href}"
-        enforcement_links.append(full_link)
-
-# Step 2: Follow each link and extract the agency name
-enforcement_data = []
-
-for link in enforcement_links:
-    # Send a GET request to each enforcement page
-    action_response = requests.get(link)
-    action_soup = BeautifulSoup(action_response.content, "html.parser")
+        if agency_text:
+            return agency_text[0].strip()
+        else:
+            return 'No Agency Info'
     
-    # Step 3: Extract the agency name from the enforcement action page
-    # Look for the <li> containing the text 'Agency:'
-    agency_tag = action_soup.find('li', string=lambda text: text and 'Agency:' in text)
-    agency = agency_tag.get_text(strip=True).replace('Agency:', '').strip() if agency_tag else 'N/A'
-    
-    # Step 4: Collect the data (Agency name and associated link)
-    enforcement_data.append({
-        'Agency': agency,
-        'Link': link
-    })
-    
-    # To avoid overwhelming the server, add a small delay
-    time.sleep(1)
+    except Exception as e:
+        print(f"Error processing {url}: {e}")
+        return 'Error Fetching Agency'
 
-# Step 5: Create a DataFrame to hold the data
-OIG_df = pd.DataFrame(enforcement_data)
+def add_agency_column_to_OIG(OIG_df):
+    agency_names = []
 
-# Step 6: Display the DataFrame
-print(OIG_df.head())  # Print the first few rows
-
-
-
+    for index, row in OIG_df.iterrows():
+        link = row['Associated Link']
+        if link:
+            print(f"Processing link {index + 1}: {link}")
+            agency_name = extract_agency_from_page(link)
+        else:
+            agency_name = 'No Link Available'
+        agency_names.append(agency_name)
+        time.sleep(1)
+    OIG_df['Agency'] = agency_names
+    return OIG_df
+OIG_df = add_agency_column_to_OIG(OIG_df)
+print(OIG_df.head())
 ```
 
 ## Step 2: Making the scraper dynamic
@@ -174,6 +152,7 @@ print(OIG_df.head())  # Print the first few rows
 
 * a. Pseudo-Code (PARTNER 2)
 
+```{python}
 #datetime will be required for conditioning on year_month
 from datetime import date
 
@@ -198,6 +177,7 @@ def year_scraper(site, year_month):
     else:
       print("Only search for years in 2013 and later!")
   return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
+```
 
 # create each chunk separately, and then put them together
 
@@ -389,6 +369,13 @@ capture both year and month at once.
 
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
 
+Plot a line chart that shows: the number of enforcement actions split out by:
+• “Criminal and Civil Actions” vs. “State Enforcement Agencies”
+• Five topics in the “Criminal and Civil Actions” category: “Health Care Fraud”, “Financial Fraud”, “Drug Enforcement”, “Bribery/Corruption”, and “Other”. 
+
+Hint:
+You will need to divide the five topics manually by looking at the title and assigning the relevant topic. For example, if you find the word “bank” or “financial” in the title of an action, then that action should probably belong to “Financial Fraud” topic.
+
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
@@ -404,6 +391,7 @@ capture both year and month at once.
 ## Step 4: Create maps of enforcement activity
 
 ### 1. Map by State (PARTNER 1)
+Map by state: Among actions taken by state-level agencies, clean the state names you collected and plot a choropleth of the number of enforcement actions for each state. Hint: look for “State of” in the agency info!
 
 ```{python}
 
