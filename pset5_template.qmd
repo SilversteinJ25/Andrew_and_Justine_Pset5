@@ -499,16 +499,10 @@ Hint:
 You will need to divide the five topics manually by looking at the title and assigning the relevant topic. For example, if you find the word “bank” or “financial” in the title of an action, then that action should probably belong to “Financial Fraud” topic.
 
 ```{python}
-import pandas as pd
-import altair as alt
-
-# Step 1: Ensure 'Date' is in datetime format
 enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date'], errors='coerce')
 
-# Step 2: Filter the dataset for 'Criminal and Civil Actions'
 criminal_and_civil_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'Criminal and Civil Actions']
 
-# Step 3: Define a function to assign topics based on keywords in the title
 def assign_topic(title):
     title = title.lower()
     if 'hospital' in title or 'health' in title:
@@ -522,32 +516,26 @@ def assign_topic(title):
     else:
         return 'Other'
 
-# Step 4: Apply the function to the 'Title of Enforcement Action' column
 criminal_and_civil_df['Topic'] = criminal_and_civil_df['Title of Enforcement Action'].apply(assign_topic)
 
-# Step 5: Group by Date (monthly) and Topic, and count the number of enforcement actions
 category_counts = criminal_and_civil_df.groupby([criminal_and_civil_df['Date'].dt.to_period('M'), 'Topic']).size().reset_index(name='Count')
 
-# Step 6: Convert the 'Date' to a timestamp for Altair
 category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
 
-# Step 7: Create the Altair line chart
 line_chart = alt.Chart(category_counts).mark_line().encode(
-    x='Date:T',        # Date on the x-axis (temporal)
-    y='Count:Q',       # Count of enforcement actions on the y-axis (quantitative)
-    color='Topic:N',   # Different colors for each topic
-    tooltip=['Date:T', 'Topic:N', 'Count:Q']  # Tooltip to display values on hover
+    x='Date:T',        
+    y='Count:Q',       
+    color='Topic:N',   
+    tooltip=['Date:T', 'Topic:N', 'Count:Q']  
 ).properties(
     title='Number of Enforcement Actions by Topic Over Time',
     width=600,
     height=400
 ).configure_axis(
-    labelAngle=-45  # Rotate x-axis labels for better readability
+    labelAngle=-45  
 )
 
-# Step 8: Show the chart
 line_chart.show()
-
 ```
 
 ## Step 4: Create maps of enforcement activity
