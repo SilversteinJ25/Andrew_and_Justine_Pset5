@@ -111,42 +111,6 @@ print(OIG_df.head())
 Hint: if you go to James A. Robinson’s profile page at the Nobel Prize website here, right click anywhere along the line “Aﬀiliation at the time of the award: University of Chicago, Chicago, IL, USA”, and select Inspect, you’ll see that this aﬀiliation information is located at the third <p> tag out of five <p> tags under the <div class="content">. Think about how you can select the third element of <p> out of five <p> elements so you’re sure you scrape the aﬀiliation information, not other. This way, you can scrape the name of agency to answer this question.
 
 ```{python}
-agency_names = [] 
-
-for index, row in OIG_df.iterrows():
-    link = row['Associated Link']
-    
-    if link:
-        print(f"Processing link {index + 1}: {link}")
-        try:
-            response = requests.get(link)
-            
-            if response.status_code == 200:
-                tree = html.fromstring(response.content)
-                agency_text = tree.xpath('/html/body/main/div/div[2]/article/div/ul/li[2]/text()')
-                
-                if agency_text:
-                    agency_name = agency_text[0].strip()
-                else:
-                    agency_name = 'No Agency Info'
-            else:
-                agency_name = 'Failed to Retrieve Page'
-        except Exception as e:
-            print(f"Error processing {link}: {e}")
-            agency_name = 'Error Fetching Agency'
-        
-        agency_names.append(agency_name)
-    
-    else:
-        agency_names.append('No Link Available')
-
-    time.sleep(1)
-
-OIG_df['Agency'] = agency_names
-print(OIG_df.head())
-```
-
-```{python}
 import requests
 from lxml import html
 
@@ -444,9 +408,9 @@ the_crawler(site, target_date, base_url)
 
 Load the dataframe from the csv
 ```{python}
-enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+#enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
-#enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
 #drop the the columns that slipped through the cracks
 enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
@@ -456,6 +420,7 @@ enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
+#| eval: false
 import datetime as datetime
 from datetime import datetime
 from datetime import date
@@ -484,9 +449,9 @@ the_crawler(site, target_date, base_url)
 ```
 
 ```{python}
-#enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
-enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+#enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -599,38 +564,51 @@ line_chart.show()
 ### 1. Map by State (PARTNER 1)
 Map by state: Among actions taken by state-level agencies, clean the state names you collected and plot a choropleth of the number of enforcement actions for each state. Hint: look for “State of” in the agency info!
 
-
-```{python}
-import pandas as pd
-
-# Assuming you already have a DataFrame named 'enforcement_actions_2021'
-print(enforcement_actions_2021.columns)
-
-```
-
+Below is the choropleth map for state level agencies. However I noticed labeling issues from the beginning as we had a lot of NAs or agencies were not labeled consistently.
 
 ```{python}
 import geopandas as gpd
 import re
+shapefile_path = "/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
+us_states = gpd.read_file(shapefile_path)
 
 state_actions_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'State Enforcement Agencies']
-def extract_state_name(agency_name):
-    match = re.search(r"State of (\w+)", agency_name)  
-    if match:
-        return match.group(1)  
+
+state_actions_df = state_actions_df[state_actions_df['Agency'].notna()]
+
+def extract_state_from_agency(agency_name):
+    if isinstance(agency_name, str):
+        match = re.search(r"State of\s+([A-Za-z\s]+)", agency_name)
+        if match:
+            return match.group(1).strip()  
+        match = re.search(r"Attorney General of\s+([A-Za-z\s]+)", agency_name)
+        if match:
+            return match.group(1).strip()  
+        match = re.search(r"([A-Za-z\s]+)", agency_name)
+        if match:
+            return match.group(1).strip()  
     return None  
 
-state_actions_df['State'] = state_actions_df['Agency'].apply(extract_state_name)
+state_actions_df['State'] = state_actions_df['Agency'].apply(extract_state_from_agency)
+
+print(state_actions_df[['Agency', 'State']].head())
+```
+
+```{python}
 state_counts = state_actions_df['State'].value_counts().reset_index()
-state_counts.columns = ['State', 'Count']  
+state_counts.columns = ['State', 'Count']
 
-us_states = gpd.read_file("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp")
+state_counts['State'] = state_counts['State'].str.strip() 
 
-merged = us_states.merge(state_counts, left_on='name', right_on='State', how='left')
+state_counts = state_counts.rename(columns={'State': 'State_Name'})
+
+merged = us_states.merge(state_counts, left_on='NAME', right_on='State_Name', how='left')
+
+merged['Count'] = merged['Count'].fillna(0)
 
 choropleth = alt.Chart(merged).mark_geoshape().encode(
     color='Count:Q',  
-    tooltip=['name:N', 'Count:Q']  
+    tooltip=['NAME:N', 'Count:Q']  
 ).project('albersUsa').properties(
     title="Number of Enforcement Actions by State (State-Level Agencies)",
     width=800,
@@ -641,7 +619,6 @@ choropleth = alt.Chart(merged).mark_geoshape().encode(
 
 choropleth.show()
 ```
-
 
 ### 2. Map by District (PARTNER 2)
 
