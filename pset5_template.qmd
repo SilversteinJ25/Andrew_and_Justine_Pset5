@@ -200,13 +200,13 @@ print(OIG_df.head())
 
 * a. Pseudo-Code (PARTNER 2)
 
-#datetime will be required for conditioning on year_month
-from datetime import date
-
 #There will be a while loop that will be conditioned on
 whether or not the webpage has a date earlier than the
-earliest date we want to scrape. This loop will be 
-part of the year_scraper() function.
+earliest date we want to scrape. I determined, using
+trial and error and ChatGPT, that I would need a while
+loop while coding the actual function, so I am updating
+the pseudo-code to be more reflective of the actual
+logic. 
 
 #receive input of web link and
 #a date object called year_month 
@@ -215,27 +215,44 @@ def year_scraper(site, year_month):
   #receiving object
   enforcement_actions_year_month = []
 
-  run function for assembling dataframe containing
-
-
-  #then run for loop with condition
-
-  #create date object for January 2nd, 2013
-  for action in data:
-    if data["Date"] >= year_month:
+  #first loop, conditioned on the year_month
+  #being >= 2013
+  if year_month >= 2013:
       
-      time.sleep(1) #will cause the scraper to delay for 2 seconds
-      yr_month_actions.append(action)
-    else:
-      print("Only search for years in 2013 and later!")
-  return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
+      #run while loop to run data through 
+      while date tag is >= year_month:
+          run function for
+          
+          #reading in the html request 
+          read_data(site)
+          
+          #creating a dataframe out of certain
+          #contents from the html request
+          assembling dataframe containing:
+          {Title of enforcement action, date, category, the link to the enforcement action, and the name of the associated agency.}
 
-# create each chunk separately, and then put them together
+          #run a function within this function 
+          #that selects the html tag associated with
+          #the next page link and then requests it,
+          #in order to move between pages. 
+          #the tag is "a", and the class_="pagination-next"
+
+          #append the contents of the dataframe,
+          #from each iteration of the loop, to 
+          #the receiving object
+          enforcement_actions_year_month.append(output)
+  
+  #if year_month < 2013, print that it needs to be 
+  #later or equal to 2013
+  else:
+      print("Turn back! We will only access data from 2013 and later!")
+
+#finally, return the receiving object, saving it to csv:
+return(enforcement_actions_year_month.to_csv("address", index = False))
 
 
 
-Take the data and select Title of enforcement action, date, category, and the link to the enforcement action
-
+  
 ```{python}
 import datetime as datetime
 from datetime import datetime
@@ -595,6 +612,9 @@ Map by state: Among actions taken by state-level agencies, clean the state names
 #read in the shapefile
 att_district = gpd.read_file("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/geo_export_994e6145-0271-400f-b382-edcb503ecc11.shp")
 
+#for handling strange projection sizes
+att_district = att_district.to_crs("EPSG:5070")
+
 #clean enforcement_actions_2021 such that only actions 
 #referencing a U.S. Attorney's Office are included
 attorney_office = "U.S. Attorney's Office"
@@ -634,31 +654,33 @@ att_district["judicial_d"] = att_district["judicial_d"].astype(str)
 
 Attribution: asked ChatGPT how to refine my code to make it more readable
 and able to skip over non-strong Agency values when subsetting. Also 
-asked how to remove elements of a string object.
+asked how to remove elements of a string object. Also used: https://www.digitalocean.com/community/tutorials/python-trim-string-rstrip-lstrip-strip
 
 Merge shapefile with attorney_data
 ```{python}
+#for dislaying the plot
+import matplotlib.pyplot as plt
+
 attorney_shape = pd.merge(att_district, strip_data, left_on = "judicial_d", right_on = "District", how = "left")
 
 #groupby "District" and get whole thing
-grouped_shape = attorney_shape.groupby("District")
+grouped_shape = attorney_shape.groupby("District")["Observations"].count().reset_index()
 
-#save to df
-#grouped_shape = pd.DataFrame(grouped_shape)
-
-#groupby "District" and get count of Observations
-#grouped_obs_shape = attorney_shape.groupby("District")["Observations"].count()
-
-#save to df
-#grouped_obs_shape = pd.DataFrame(grouped_shape)
-
-#add grouped_obs_shape as a column to 
+#merge data to add this column to shapefile
+second_shape = attorney_shape.merge(grouped_shape, on = "District")
 
 #create the choropleth
+fig, ax = plt.subplots()
 
-grouped_shape.plot(column = "judicial_d", legend = True)
+choropleth = second_shape.plot(column = "Observations_y", legend = True)
 
+choropleth.set_title("Choropleth of Enforcement Actions")
 ```
+
+Attribution: Asked ChatGPT how to use a Groupby object in a choropleth,
+also used: https://saturncloud.io/blog/how-to-convert-dataframegroupby-object-to-dataframe-in-pandas/ Also asked
+Chat GPT how to use EPSG:5070 to handle projection issues, and used it for
+ideas for adding elements to my plot, namely the title
 
 ## Extra Credit
 
