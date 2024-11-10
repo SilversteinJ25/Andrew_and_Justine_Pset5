@@ -408,9 +408,9 @@ the_crawler(site, target_date, base_url)
 
 Load the dataframe from the csv
 ```{python}
-#enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
-enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+#enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
 #drop the the columns that slipped through the cracks
 enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
@@ -462,17 +462,14 @@ the_crawler(site, target_date, base_url)
 ```
 
 ```{python}
-enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+#enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
-<<<<<<< HEAD
 enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
 #trim the actions that slipped through the cracks
 enforcement_actions_2021 = enforcement_actions_2021.drop([3022, 3023, 3024, 3025, 3026, 3027, 3028, 3029, 3030, 3031, 3032, 3033, 3034, 3035, 3036, 3037, 3038, 3039])
 
-=======
 #enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
->>>>>>> 757c6ce6131ed2f421f94559e10c5f7e415b8634
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -590,7 +587,10 @@ Below is the choropleth map for state level agencies. However I noticed labeling
 ```{python}
 import geopandas as gpd
 import re
-shapefile_path = "/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
+
+shapefile_path = "C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
+
+#shapefile_path = "/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
 us_states = gpd.read_file(shapefile_path)
 
 state_actions_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'State Enforcement Agencies']
