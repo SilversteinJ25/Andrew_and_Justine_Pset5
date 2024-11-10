@@ -408,9 +408,9 @@ the_crawler(site, target_date, base_url)
 
 Load the dataframe from the csv
 ```{python}
-enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+#enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
-#enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
 #drop the the columns that slipped through the cracks
 enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
@@ -462,9 +462,9 @@ the_crawler(site, target_date, base_url)
 ```
 
 ```{python}
-#enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
-enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+#enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
 #trim the actions that slipped through the cracks
 enforcement_actions_2021 = enforcement_actions_2021.drop([3022, 3023, 3024, 3025, 3026, 3027, 3028, 3029, 3030, 3031, 3032, 3033, 3034, 3035, 3036, 3037, 3038, 3039])
@@ -588,9 +588,9 @@ Below is the choropleth map for state level agencies. However I noticed labeling
 import geopandas as gpd
 import re
 
-shapefile_path = "C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
+#shapefile_path = "C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
 
-#shapefile_path = "/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
+shapefile_path = "/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp"
 us_states = gpd.read_file(shapefile_path)
 
 state_actions_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'State Enforcement Agencies']
@@ -646,7 +646,9 @@ choropleth.show()
 ```{python}
 
 #read in the shapefile
-att_district = gpd.read_file("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/geo_export_994e6145-0271-400f-b382-edcb503ecc11.shp")
+#att_district = gpd.read_file("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/geo_export_994e6145-0271-400f-b382-edcb503ecc11.shp")
+
+att_district = gpd.read_file("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/geo_export_d66fe5ba-f13e-4999-bc59-ba940003ff9b.shp")
 
 #for handling strange projection sizes
 att_district = att_district.to_crs("EPSG:5070")
