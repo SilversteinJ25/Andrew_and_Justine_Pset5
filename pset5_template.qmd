@@ -220,9 +220,7 @@ def year_scraper(site, year_month):
       
       #run while loop to run data through 
       while date tag is >= year_month:
-          run function for
-          
-          #reading in the html request 
+          #run function for reading in the html request 
           read_data(site)
           
           #creating a dataframe out of certain
