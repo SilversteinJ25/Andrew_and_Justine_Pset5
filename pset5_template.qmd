@@ -248,7 +248,7 @@ def year_scraper(site, year_month):
 return(enforcement_actions_year_month.to_csv("address", index = False))
 
 
-
+b.
   
 ```{python}
 import datetime as datetime
@@ -453,6 +453,19 @@ enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537
 
 ```
 
+Step 2 Part B Answer: Originally, the output of the 
+crawler was 1,540 entries, meaning 1,540 enforcement 
+actions. However, it became clear that, due to the 
+nature of the loop conditioning the scraper, a few 
+entries past 2023 had been captured. We located them,
+there were 6, and removed them, bringing the correct
+total down to 1,534 enforcement actions. The earliest
+entry we grabbed is from January 3rd, 2023. The action 
+was a podiatrist settling false billing allegations
+by paying $90,000.00. It has been filed under Criminal
+and Civil Actions, and the associated agency is the 
+U.S. Attorney's Office in the Southern District of Texas.
+
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
@@ -487,6 +500,10 @@ the_crawler(site, target_date, base_url)
 #enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 
 enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+
+#trim the actions that slipped through the cracks
+enforcement_actions_2021 = enforcement_actions_2021.drop([3022, 3023, 3024, 3025, 3026, 3027, 3028, 3029, 3030, 3031, 3032, 3033, 3034, 3035, 3036, 3037, 3038, 3039])
+
 ```
 
 ## Step 3: Plot data based on scraped data
