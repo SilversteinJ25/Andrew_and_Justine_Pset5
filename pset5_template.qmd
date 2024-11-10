@@ -198,34 +198,36 @@ print(OIG_df.head())
 
 * a. Pseudo-Code (PARTNER 2)
 
-
 #datetime will be required for conditioning on year_month
 from datetime import date
 
 #There will be a while loop that will be conditioned on
 whether or not the webpage has a date earlier than the
 earliest date we want to scrape. This loop will be 
-part of the year_scraper() function.
+part of the year_scraper() function. I realized
+that a regular loop would not work as I 
+was building the actual code.
 
 #receive input of web link and
 #a date object called year_month 
 def year_scraper(site, year_month):
+
   #receiving object
   enforcement_actions_year_month = []
 
-  run function for assembling dataframe containing
-
-
-  #then run for loop with condition
-
-  #create date object for January 2nd, 2013
-  for action in data:
-    if data["Date"] >= year_month:
-      
-      time.sleep(1) #will cause the scraper to delay for 2 seconds
-      yr_month_actions.append(action)
-    else:
-      print("Only search for years in 2013 and later!")
+  #then run for loop 
+  if year_month <= 2013:
+      print ("Turn back! Years 2013 and later, only!")
+  else:
+      while date_tag <= year_month:
+          run function for assembling dataframe containing:
+            Enforcement Title, Date, Category, Link, and Agency
+            #for each cycle, append the results to the 
+            #receiving object
+            enforcement_actions_year_month.append(dataframe)
+            #will cause the scraper to delay for 1 second
+            time.sleep(1) 
+  #return the fully stocked dataframe and save it to .csv       
   return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
 
 # create each chunk separately, and then put them together
@@ -437,6 +439,18 @@ enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537
 
 ```
 
+Step 2 B Answer:
+The output of this code was originally 1,540 entries, due
+to a small error that makes it so that a few entries
+with dates earlier than January 1st, 2023 slip through. 
+After trimming the (6) entries from 2022, we are left with 
+1,534 entries, or 1,534 enforcement actions. The earliest entry of these trimmed entries is
+January 3rd, 2023. In this case, a podiatrist 
+pays $90,000 to settle false billing allegations. It is under the category of 
+Criminal and Civil Actions, and the 
+associated agency is the U.S. Attorney's 
+Office.
+
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
@@ -488,14 +502,14 @@ def  one_dummy(C):
   return(observation)
 
 #add observation column to df
-df["Observation"] = one_dummy(len(df))
+enforcement_actions_2023["Observations"] = one_dummy(len(enforcement_actions_2023))
 
 #make a line chart that is 
 #"Observation" by yearmonth("Date")
 #Observation represents 1 enforcement
-alt.Chart().mark_line().encode(
+alt.Chart(enforcement_actions_2023).mark_line().encode(
   alt.X("yearmonth(Date)"),
-  alt.Y("Observations")
+  alt.Y("sum(Observations)")
 )
 ```
 
