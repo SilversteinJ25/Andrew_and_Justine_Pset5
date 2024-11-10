@@ -54,6 +54,8 @@ import requests
 from bs4 import BeautifulSoup
 import urllib3
 import time
+
+import geopandas as gpd
 ```
 
 ## Step 1: Develop initial scraper and crawler
@@ -204,13 +206,7 @@ from datetime import date
 #There will be a while loop that will be conditioned on
 whether or not the webpage has a date earlier than the
 earliest date we want to scrape. This loop will be 
-<<<<<<< HEAD
-part of the year_scraper() function. I realized
-that a regular loop would not work as I 
-was building the actual code.
-=======
 part of the year_scraper() function.
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
 
 #receive input of web link and
 #a date object called year_month 
@@ -219,21 +215,6 @@ def year_scraper(site, year_month):
   #receiving object
   enforcement_actions_year_month = []
 
-<<<<<<< HEAD
-  #then run for loop 
-  if year_month <= 2013:
-      print ("Turn back! Years 2013 and later, only!")
-  else:
-      while date_tag <= year_month:
-          run function for assembling dataframe containing:
-            Enforcement Title, Date, Category, Link, and Agency
-            #for each cycle, append the results to the 
-            #receiving object
-            enforcement_actions_year_month.append(dataframe)
-            #will cause the scraper to delay for 1 second
-            time.sleep(1) 
-  #return the fully stocked dataframe and save it to .csv       
-=======
   run function for assembling dataframe containing
 
 
@@ -247,7 +228,6 @@ def year_scraper(site, year_month):
       yr_month_actions.append(action)
     else:
       print("Only search for years in 2013 and later!")
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
   return(yr_month_actions.to_csv("enforcement_actions_year_month.csv"))
 
 # create each chunk separately, and then put them together
@@ -446,44 +426,18 @@ base_url = "https://oig.hhs.gov"
 the_crawler(site, target_date, base_url)
 
 
-<<<<<<< HEAD
-=======
-```
-
-Load the dataframe from the csv
-```{python}
-#enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
-
-enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
-
-#drop the the columns that slipped through the cracks
-enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
-
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
 ```
 
 Load the dataframe from the csv
 ```{python}
 enforcement_actions_2023 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
 
+#enforcement_actions_2023 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2023.csv")
+
 #drop the the columns that slipped through the cracks
 enforcement_actions_2023 = enforcement_actions_2023.drop([1534, 1535, 1536, 1537, 1538, 1539])
 
-
-
 ```
-
-Step 2 B Answer:
-The output of this code was originally 1,540 entries, due
-to a small error that makes it so that a few entries
-with dates earlier than January 1st, 2023 slip through. 
-After trimming the (6) entries from 2022, we are left with 
-1,534 entries, or 1,534 enforcement actions. The earliest entry of these trimmed entries is
-January 3rd, 2023. In this case, a podiatrist 
-pays $90,000 to settle false billing allegations. It is under the category of 
-Criminal and Civil Actions, and the 
-associated agency is the U.S. Attorney's 
-Office.
 
 * c. Test Partner's Code (PARTNER 1)
 
@@ -516,7 +470,9 @@ the_crawler(site, target_date, base_url)
 ```
 
 ```{python}
-enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+#enforcement_actions_2021 = pd.read_csv("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
+
+enforcement_actions_2021 = pd.read_csv("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/enforcement_actions_2021.csv")
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -535,24 +491,14 @@ def  one_dummy(C):
   return(observation)
 
 #add observation column to df
-<<<<<<< HEAD
-enforcement_actions_2023["Observations"] = one_dummy(len(enforcement_actions_2023))
-=======
-df["Observation"] = one_dummy(len(df))
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
+enforcement_actions_2021["Observations"] = one_dummy(len(enforcement_actions_2021))
 
 #make a line chart that is 
 #"Observation" by yearmonth("Date")
 #Observation represents 1 enforcement
-<<<<<<< HEAD
-alt.Chart(enforcement_actions_2023).mark_line().encode(
+alt.Chart(enforcement_actions_2021).mark_line().encode(
   alt.X("yearmonth(Date)"),
   alt.Y("sum(Observations)")
-=======
-alt.Chart().mark_line().encode(
-  alt.X("yearmonth(Date)"),
-  alt.Y("Observations")
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
 )
 ```
 
@@ -563,75 +509,6 @@ Plot a line chart that shows: the number of enforcement actions split out by:
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
-<<<<<<< HEAD
-import pandas as pd
-import altair as alt
-
-# Example: OIG_df contains 'Title', 'Category', 'Date' columns
-# OIG_df = pd.read_csv("your_data.csv")  # Load your data
-
-# Step 1: Classify the enforcement actions into five topics based on Title
-def classify_topic(title):
-    title = title.lower()
-    if 'health care' in title or 'medicare' in title or 'medicaid' in title:
-        return 'Health Care Fraud'
-    elif 'financial' in title or 'bank' in title or 'fraud' in title:
-        return 'Financial Fraud'
-    elif 'drug' in title or 'opioid' in title:
-        return 'Drug Enforcement'
-    elif 'bribery' in title or 'corruption' in title:
-        return 'Bribery/Corruption'
-    else:
-        return 'Other'
-
-# Apply the classification function to the 'Title' column to create a new 'Topic' column
-OIG_df['Topic'] = OIG_df['Title'].apply(classify_topic)
-
-# Step 2: Add a new 'Is Criminal and Civil Actions' column to differentiate categories
-OIG_df['Is Criminal and Civil Actions'] = OIG_df['Category'].apply(
-    lambda x: True if 'Criminal and Civil Actions' in x else False)
-
-# Step 3: Group by date and category/topic
-# First, make sure 'Date' is a datetime object
-OIG_df['Date'] = pd.to_datetime(OIG_df['Date'])
-
-# Group by date, category, and topic to count occurrences
-category_counts = OIG_df.groupby([OIG_df['Date'].dt.to_period('M'), 'Category']).size().reset_index(name='Count')
-
-# Group by date and topic (for Criminal and Civil Actions)
-topic_counts = OIG_df[OIG_df['Category'] == 'Criminal and Civil Actions'].groupby([OIG_df['Date'].dt.to_period('M'), 'Topic']).size().reset_index(name='Count')
-
-# Step 4: Plotting with Altair
-# Combine both category_counts and topic_counts into one dataframe
-category_counts['Type'] = 'Category'
-topic_counts['Type'] = 'Topic'
-
-# Concatenate the dataframes
-plot_data = pd.concat([category_counts, topic_counts], ignore_index=True)
-
-# Altair Plot
-chart = alt.Chart(plot_data).mark_line().encode(
-    x='Date:T',  # Time on the x-axis
-    y='Count:Q',  # Count of enforcement actions on the y-axis
-    color='Type:N',  # Color by 'Type' (Category or Topic)
-    detail='Type:N',  # Separate lines for each type
-    strokeDash='Type:N',  # Different line styles (solid vs. dashed)
-    tooltip=['Date:T', 'Count:Q', 'Type:N']
-).facet(
-    column='Type:N',  # Facet by 'Type' (Category vs. Topic)
-    header=alt.Header(title='Enforcement Actions by Category and Topic')
-).properties(
-    title='Number of Enforcement Actions Over Time',
-    width=400,
-    height=300
-).configure_axis(
-    labelAngle=-45  # Rotate the x-axis labels for better readability
-)
-
-# Display the chart
-chart.show()
-
-=======
 enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date'], errors='coerce')
 
 category_filter = enforcement_actions_2021[enforcement_actions_2021['Category'].isin(['Criminal and Civil Actions', 'State Enforcement Agencies'])]
@@ -654,7 +531,6 @@ line_chart = alt.Chart(category_counts).mark_line().encode(
 )
 
 line_chart.show()
->>>>>>> eb89a441ced676097d3c4afdd476adffbbc6f088
 ```
 
 * based on five topics
@@ -715,6 +591,22 @@ Map by state: Among actions taken by state-level agencies, clean the state names
 ### 2. Map by District (PARTNER 2)
 
 ```{python}
+
+#read in the shapefile
+att_district = gpd.read_file("C:/Users/andre/Documents/GitHub/Andrew_and_Justine_Pset5/geo_export_994e6145-0271-400f-b382-edcb503ecc11.shp")
+
+#clean enforcement_actions_2021 such that only actions 
+#referencing a U.S. Attorney's Office are included
+attorney_office = "U.S. Attorney's Office"
+
+def only_attorney(df):
+  #receiving box
+  box = []
+  for index, row in df.iterrows():
+      if 
+
+  return pd.DataFrame(box)
+attorney_data = 
 
 ```
 
