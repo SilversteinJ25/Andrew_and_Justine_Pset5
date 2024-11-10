@@ -1,2 +1,11 @@
 *.csv
 *.shp
+*.xml
+*.prj
+*.cpg
+*.dbf
+*.shp.ea.iso.xml
+*.shp.iso.xml
+*.shx
+*.cpg
+*.dbf
