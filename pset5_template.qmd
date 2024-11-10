@@ -1,7 +1,7 @@
 ---
-title: "title"
-author: "author"
-date: "date"
+title: "Pset5"
+author: "Andrew White and Justine Silverstein"
+date: "11/10/2024"
 format: 
   pdf:
     include-in-header: 
@@ -521,8 +521,8 @@ line_chart = alt.Chart(category_counts).mark_line().encode(
     tooltip=['Date:T', 'Category:N', 'Count:Q']  
 ).properties(
     title='Number of Enforcement Actions Over Time',
-    width=600,
-    height=400
+    width=500,
+    height=300
 ).configure_axis(
     labelAngle=-45  
 )
@@ -632,8 +632,8 @@ choropleth = alt.Chart(merged).mark_geoshape().encode(
     tooltip=['NAME:N', 'Count:Q']  
 ).project('albersUsa').properties(
     title="Number of Enforcement Actions by State (State-Level Agencies)",
-    width=800,
-    height=500
+    width=600,
+    height=300
 ).configure_view(
     stroke=None  
 )
@@ -720,7 +720,6 @@ Chat GPT how to use EPSG:5070 to handle projection issues, and used it for
 ideas for adding elements to my plot, namely the title
 
 ## Extra Credit
-
 ### 1. Merge zip code shapefile with population
 ```{python}
 
