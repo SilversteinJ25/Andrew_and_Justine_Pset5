@@ -603,10 +603,60 @@ def only_attorney(df):
   #receiving box
   box = []
   for index, row in df.iterrows():
-      if 
-
+      if isinstance(row["Agency"], str) and attorney_office in row["Agency"]:
+        box.append(row)
+      else:
+        pass
   return pd.DataFrame(box)
-attorney_data = 
+
+#run function  
+attorney_data = only_attorney(enforcement_actions_2021)
+
+#create new variable called District, by removing attorney_office 
+#str objects from each Agency entry in attorney_data
+
+def strip_away(df):
+  df["District"] = df["Agency"].str.replace("U.S. Attorney's Office,", "", regex = False)
+  #make into a string
+  df["District"] = df["District"].astype(str)
+  #remove leading spaces
+  df["District"] = df["District"].str.lstrip()
+  return df
+
+strip_data = strip_away(attorney_data)
+
+strip_data
+
+#ensure that att_district["judicial_d"] is a string
+att_district["judicial_d"] = att_district["judicial_d"].astype(str)
+
+```
+
+Attribution: asked ChatGPT how to refine my code to make it more readable
+and able to skip over non-strong Agency values when subsetting. Also 
+asked how to remove elements of a string object.
+
+Merge shapefile with attorney_data
+```{python}
+attorney_shape = pd.merge(att_district, strip_data, left_on = "judicial_d", right_on = "District", how = "left")
+
+#groupby "District" and get whole thing
+grouped_shape = attorney_shape.groupby("District")
+
+#save to df
+#grouped_shape = pd.DataFrame(grouped_shape)
+
+#groupby "District" and get count of Observations
+#grouped_obs_shape = attorney_shape.groupby("District")["Observations"].count()
+
+#save to df
+#grouped_obs_shape = pd.DataFrame(grouped_shape)
+
+#add grouped_obs_shape as a column to 
+
+#create the choropleth
+
+grouped_shape.plot(column = "judicial_d", legend = True)
 
 ```
 
