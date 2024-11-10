@@ -49,7 +49,6 @@ import warnings
 warnings.filterwarnings('ignore')
 alt.renderers.enable("png")
 
-import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import urllib3
@@ -560,18 +559,20 @@ enforcement_actions_2021['Date'] = pd.to_datetime(enforcement_actions_2021['Date
 
 criminal_and_civil_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'Criminal and Civil Actions']
 
+topics_keywords = {
+    'Health Care Fraud': ['health', 'hospital'],
+    'Financial Fraud': ['bank', 'financial', 'money laundering', 'investment', 'tax evasion'],
+    'Drug Enforcement': ['drug', 'trafficking', 'narcotics', 'opioid'],
+    'Bribery/Corruption': ['bribery', 'corruption', 'kickback'],
+    'Other': []  
+}
+
 def assign_topic(title):
     title = title.lower()
-    if 'hospital' in title or 'health' in title:
-        return 'Health Care Fraud'
-    elif 'bank' in title or 'financial' in title:
-        return 'Financial Fraud'
-    elif 'drug' in title or 'pharmaceutical' in title:
-        return 'Drug Enforcement'
-    elif 'bribe' in title or 'corrupt' in title:
-        return 'Bribery/Corruption'
-    else:
-        return 'Other'
+    for topic, keywords in topics_keywords.items():
+        if any(keyword in title for keyword in keywords):
+            return topic
+    return 'Other'  
 
 criminal_and_civil_df['Topic'] = criminal_and_civil_df['Title of Enforcement Action'].apply(assign_topic)
 
@@ -582,7 +583,7 @@ category_counts['Date'] = category_counts['Date'].dt.to_timestamp()
 line_chart = alt.Chart(category_counts).mark_line().encode(
     x='Date:T',        
     y='Count:Q',       
-    color='Topic:N',   
+    color='Topic:N',    
     tooltip=['Date:T', 'Topic:N', 'Count:Q']  
 ).properties(
     title='Number of Enforcement Actions by Topic Over Time',
@@ -600,8 +601,47 @@ line_chart.show()
 ### 1. Map by State (PARTNER 1)
 Map by state: Among actions taken by state-level agencies, clean the state names you collected and plot a choropleth of the number of enforcement actions for each state. Hint: look for “State of” in the agency info!
 
-```{python}
 
+```{python}
+import pandas as pd
+
+# Assuming you already have a DataFrame named 'enforcement_actions_2021'
+print(enforcement_actions_2021.columns)
+
+```
+
+
+```{python}
+import geopandas as gpd
+import re
+
+state_actions_df = enforcement_actions_2021[enforcement_actions_2021['Category'] == 'State Enforcement Agencies']
+def extract_state_name(agency_name):
+    match = re.search(r"State of (\w+)", agency_name)  
+    if match:
+        return match.group(1)  
+    return None  
+
+state_actions_df['State'] = state_actions_df['Agency'].apply(extract_state_name)
+state_counts = state_actions_df['State'].value_counts().reset_index()
+state_counts.columns = ['State', 'Count']  
+
+us_states = gpd.read_file("/Users/justinesilverstein/Desktop/Andrew_and_Justine_Pset5/cb_2018_us_state_500k.shp")
+
+merged = us_states.merge(state_counts, left_on='name', right_on='State', how='left')
+
+choropleth = alt.Chart(merged).mark_geoshape().encode(
+    color='Count:Q',  
+    tooltip=['name:N', 'Count:Q']  
+).project('albersUsa').properties(
+    title="Number of Enforcement Actions by State (State-Level Agencies)",
+    width=800,
+    height=500
+).configure_view(
+    stroke=None  
+)
+
+choropleth.show()
 ```
 
 
